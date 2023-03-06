@@ -18,6 +18,8 @@ KoGTP2를 이용하여 문장생성,챗봇구현 후 웹서비스 띄우기
 - 바디 : src="/static/plugins/
 - adminLTE url : https://github.com/ColorlibHQ/AdminLTE/releases/tag/v3.2.0
 
+- 학습을 마친 모델을 가져와 사용하는데, 학습한 모델을 불러올시 깃 푸쉬가 안되는 문제로 run.py를 가동 할때만 넣고 깃에는 푸쉬안함.
+
 ---------------------
 밑에는 클라우드에서 가상서버 만든 후 MobaXterm에서 설치한 것.
 ```
