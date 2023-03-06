@@ -1,3 +1,8 @@
+|문장생성|챗봇|
+|:-:|:-:|
+|<img src="https://user-images.githubusercontent.com/67897827/223158500-33b3ff0b-4237-40fe-9804-40bef87bc1db.PNG" width="700" height="300"/>|<img src="https://user-images.githubusercontent.com/67897827/223158509-ba07cc3a-c404-466c-81a3-c311a642b3ce.PNG" width="700" height="300"/>| 
+
+
 # 1. 딥러닝을 활용하여 문장생성 및 챗봇기능을 탑재하여 웹서비스 구현. 
 KoGTP2를 이용하여 문장생성,챗봇구현 후 웹서비스 띄우기
 
