@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% include 'public/head.html' %}
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+  <div class="wrapper"> 
+    <!-- Preloader -->
+    
+    <!-- Navbar:navi -->
+    {% include 'public/navi.html' %}    
+    <!-- Main Sidebar:left Container -->
+    {% include 'public/left.html' %}
+    <!-- Content Wrapper:index_content. Contains page content -->
+    {% include 'pages/chatbot_content.html' %}
+    <!-- copyright -->        
+    {% include 'public/copyright.html' %}
+    <!-- Control Sidebar:right -->        
+    {% include 'public/right.html' %}
+  </div>
+  <!-- ./wrapper -->
+  {% include 'public/js.html' %}  
+  <script>
+    // 채팅에 관련된 모든 작업 진행
+    // 1. 입력창에 내용 입력후 엔터키를 누르면(keypress) 서버로 내용 전송
+    // 2. 전송버튼(send)를 클릭하면(click) 서버로 내용 전송
+    // 대상을 특정(css selector) -> 이벤트 부여(on()) -> 이벤트가 발생하면 처리할일 작성(콜백함수)
+    $('#chat_input').on('keypress', (e)=>{
+      if( e.keyCode == 13 ){
+        //console.log('키를 눌렀다')
+        sendMessage()
+      }
+    })
+    $('#chat_send').on('click', (e)=>{
+      //console.log('send 버튼을 클릭했다')
+      sendMessage()
+    })
+    // 입력 내용을 서버로 전송
+    function sendMessage(){
+      console.log('메시지 전송')
+      // 1. 메시지 획득
+      msg = $('#chat_input').val()
+      // 1-1. 입력창 비움
+      $('#chat_input').val('')
+      // 1-2. 입력 내용 채팅
+      setChatting('my',msg)
+      // 2. 메시지 전송 -> form(X), ajax(O), websocket(X)
+      $.post({
+        url:'/nlp/chatbot_proc',    // 서버주소
+        data:'msg='+msg,            // 보낼 내용:키=값&키=값....
+        dataType:'json',            // json 방식으로 파싱(해석하여 데이터 추출)
+        success:(res)=>{
+          resProcessing(res)
+        },                          // 서버와 통신 성공하면 이쪽으로 진입
+        error:(err)=>{
+          // 팝업 표시
+          alert( '오류:' + err )
+        }                           // 서버와 통신 실패하면 이쪽으로 진입
+      })
+    }
+    // 3. 메시지 응답 처리 -> 화면표시
+    function resProcessing( res ){
+      console.log( '응답내용', res )
+      // 응답 내용에서 키와 동일한 변수를 지정하여 값을 추출(분해)
+      let {name,answer} = res
+      // 답변 화면처리
+      setChatting(name,answer,'right')
+
+    }
+    // 채팅 보드에 채팅 내용이 세팅되게 화면 처리하는 함수
+    function setChatting( name, msg, dir='left'){
+      let html = ''
+      if( dir == 'left' ){
+        // 내가 보낸 메시지(질문)
+        html = `
+          <div class="direct-chat-msg">
+              <div class="direct-chat-infos clearfix">
+                  <span class="direct-chat-name float-left">${name}</span>
+                  <span class="direct-chat-timestamp float-right">${new Date()}</span>
+              </div>
+              <!-- /.direct-chat-infos -->
+              <img class="direct-chat-img" src="/static/dist/img/user1-128x128.jpg" alt="message user image">
+              <!-- /.direct-chat-img -->
+              <div class="direct-chat-text">
+                  ${ msg }
+              </div>
+              <!-- /.direct-chat-text -->
+          </div>
+        `        
+      }else{
+        // 관리자가 보낸 메시지(답변)
+        html = `
+          <div class="direct-chat-msg right">
+              <div class="direct-chat-infos clearfix">
+                  <span class="direct-chat-name float-right">${name}</span>
+                  <span class="direct-chat-timestamp float-left">${new Date()}</span>
+              </div>
+              <!-- /.direct-chat-infos -->
+              <img class="direct-chat-img" src="/static/dist/img/user3-128x128.jpg" alt="message user image">
+              <!-- /.direct-chat-img -->
+              <div class="direct-chat-text">
+                ${ msg }
+              </div>
+              <!-- /.direct-chat-text -->
+          </div>
+        `
+      }
+      // 질문 혹은 답변 내용이 화면에 동적으로 추가됨
+      $('#chat_main_board').append( html )
+      // 화면 자동 스크롤 처리
+      $('#chat_main_board').scrollTop($('#chat_main_board')[0].scrollHeight)
+    }
+  </script>
+</body>
+</html>

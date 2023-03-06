@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% include 'public/head.html' %}
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+  <div class="wrapper">
+
+    <!-- Preloader -->
+    
+
+    <!-- Navbar:navi -->
+    {% include 'public/navi.html' %}
+    <!-- /.navbar -->
+
+    <!-- Main Sidebar:left Container -->
+    {% include 'public/left.html' %}
+
+    <!-- Content Wrapper: index cont. Contains page content -->
+    {% include 'pages/create_sentence_content.html' %}
+    <!-- /.content-wrapper -->
+
+    <!-- Copyright -->
+    {% include 'public/copyright.html' %}
+
+    <!-- Control Sidebar:right -->
+    {% include 'public/right.html' %}
+    <!-- /.control-sidebar -->
+
+  </div>
+  <!-- ./wrapper -->
+  {% include 'public/js.html' %}
+  <!-- 실시간 통신담당 socket.io 포함(js) https://socket.io/docs/v4/client-installation/-->
+  <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+        
+  <script>
+    let question_id = 0
+    let url = `http://${ document.domain }:${ location.port }`
+    const socket = io(url);
+    socket.on('connect', ()=>{
+        console.log('서버에 접속 되었다')
+        socket.emit('cTos_simple_msg', {msg:'근육이 커지기 위해서는'})
+    })
+    socket.on('sToc_simple_msg', data=>{
+        console.log( data )
+    })
+    socket.on('sToc_create_sentence', data=>{
+        // 서버가 생성하는 문장을 지속적으로 붙여서 문장을 동적으로 표현
+        // $('#board').append(data.word+" ")  // 여기선 서버에서 던져준거 받을때 data.word이런식으로
+        let {word,name} = data
+        // 화면상에 응답 내용을 추가하는 부분
+        if($(`#anw_${question_id}`)[0] === undefined){
+          setChatting(name,word,'right')
+        }else{
+          $(`#anw_${question_id}`).append( word+" ")
+        }
+        
+
+    })
+
+    // 채팅에 관련된 모든 작업 진행
+    // 1. 입력창에 내용 입력후 엔터키를 누르면(keypress) 서버로 내용 전송
+    // 2. 전송버튼(send)를 클릭하면(click) 서버로 내용 전송
+    // 대상을 특정(css selector) -> 이벤트 부여(on()) -> 이벤트가 발생하면 처리할일 작성(콜백함수)
+    $('#chat_input').on('keypress', (e)=>{
+      if( e.keyCode == 13 ){
+        //console.log('키를 눌렀다')
+        sendMessage()
+      }
+    })
+    $('#chat_send').on('click', (e)=>{
+      //console.log('send 버튼을 클릭했다')
+      sendMessage()
+    })
+    // 입력 내용을 서버로 전송
+    function sendMessage(){
+      console.log('메시지 전송')
+      // 1. 메시지 획득
+      msg = $('#chat_input').val()
+      // 1-1. 입력창 비움
+      $('#chat_input').val('')
+      // 1-2. 입력 내용 채팅
+      setChatting('my',msg)
+      // 2. 웹소켓으로 전송
+      question_id++
+      socket.emit('cTos_create_sentence', {seed:msg})
+    }
+    // 3. 메시지 응답 처리 -> 화면표시
+    function resProcessing( res ){
+      console.log( '응답내용', res )
+      // 응답 내용에서 키와 동일한 변수를 지정하여 값을 추출(분해)
+      let {name,answer} = res
+      // 답변 화면처리
+      setChatting(name,answer,'right')
+
+    }
+    // 채팅 보드에 채팅 내용이 세팅되게 화면 처리하는 함수
+    function setChatting( name, msg, dir='left'){
+      let html = ''
+      if( dir == 'left' ){
+        // 내가 보낸 메시지(질문)
+        html = `
+          <div class="direct-chat-msg">
+              <div class="direct-chat-infos clearfix">
+                  <span class="direct-chat-name float-left">${name}</span>
+                  <span class="direct-chat-timestamp float-right">${new Date()}</span>
+              </div>
+              <!-- /.direct-chat-infos -->
+              <img class="direct-chat-img" src="/static/dist/img/user1-128x128.jpg" alt="message user image">
+              <!-- /.direct-chat-img -->
+              <div class="direct-chat-text">
+                  ${ msg }
+              </div>
+              <!-- /.direct-chat-text -->
+          </div>
+        `        
+      }else{
+        // 관리자가 보낸 메시지(답변)
+        html = `
+          <div class="direct-chat-msg right">
+              <div class="direct-chat-infos clearfix">
+                  <span class="direct-chat-name float-right">${name}</span>
+                  <span class="direct-chat-timestamp float-left">${new Date()}</span>
+              </div>
+              <!-- /.direct-chat-infos -->
+              <img class="direct-chat-img" src="/static/dist/img/user3-128x128.jpg" alt="message user image">
+              <!-- /.direct-chat-img -->
+              <div class="direct-chat-text" id="anw_${question_id}">
+                ${ msg }
+              </div>
+              <!-- /.direct-chat-text -->
+          </div>
+        `
+      }
+      // 질문 혹은 답변 내용이 화면에 동적으로 추가됨
+      $('#chat_main_board').append( html )
+      // 화면 자동 스크롤 처리
+      $('#chat_main_board').scrollTop($('#chat_main_board')[0].scrollHeight)
+    }
+  </script>
+</body>
+
+</html>

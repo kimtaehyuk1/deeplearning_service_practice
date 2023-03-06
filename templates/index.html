@@ -1,0 +1,57 @@
+<html>
+    <head>
+        <!-- 실시간 통신담당 socket.io 포함(js) https://socket.io/docs/v4/client-installation/-->
+        <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+        <!-- 화면처리, 이벤트 담당 jQuery.js 포함 https://developers.google.com/speed/libraries?hl=ko#jquery-->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+
+    </head>
+    <body>
+        <!-- 채팅(혹은 챗봇) UI, 문장이 생성되는 공간-->
+        <div id="board"></div>
+        <!-- 사용자 문장 생성을 요청하기 위해 작성하는 공간 -->
+        <textarea id="seed_sentence" cols="10" rows="3"></textarea>
+        <!-- 최초 재료 문장을 서버로 보내는 이벤트를 발동하는 버튼 -->
+        <button id="create_btn">문장 생성 요청</button>
+        <script>
+            // 더미데이터 세팅 (시드 문장 자동 입력)
+            $('#seed_sentence').val('근육이 커지기 위해서는')
+            $('#create_btn').on('click', ()=>{
+                //1. 입력값 추출
+                let seed_sentence = $('#seed_sentence').val()
+                //2. 입력창 비운다
+                $('#seed_sentence').val('')
+                //3. 추출한 시드 문장을 채팅 메인 화면에 세팅
+                $('#board').html(seed_sentence+" ") // 기존 내용을 지우고 새로운 내용을 덮어쓴다.
+                //4. 서버로 시드 문장 전송(문장 생성을 요청한다.)
+                socket.emit('cTos_create_sentence', {seed:seed_sentence})
+
+            })
+
+            // 서버 접속
+            // 서버 주소 획득
+            // ws <-> http : 웹소켓은 2가지 방식으로 통신이 가능함
+            let url = `http://${ document.domain }:${ location.port }`
+            console.log( url )
+            // 서버측에 접속 요청
+            const socket = io(url);
+            // 소켓에 이벤트 등록 -> 클라이언트와 서버는 이벤트를 발생시켜서 서로 통신한다
+            // 이벤트명은 몇개의 정해진 이름 + 사용자 정의하는 이벤트명으로 구성
+            // connect 이벤트는 클라이언트가 접속했다라는 이벤트
+            socket.on('connect', ()=>{
+                console.log('서버에 접속 되었다')
+                // 클라이언트 => 서버 : 메시지 전송, 이벤트 기반, 
+                //              메세지형태 :js(객체), 데이터(json), python(딕셔너리)
+                socket.emit('cTos_simple_msg', {msg:'근육이 커지기 위해서는'})
+            })
+            socket.on('sToc_simple_msg', data=>{
+                console.log( data )
+            })
+            socket.on('sToc_create_sentence', data=>{
+                // 서버가 생성하는 문장을 지속적으로 붙여서 문장을 동적으로 표현
+                $('#board').append(data.word+" ")  // 여기선 서버에서 던져준거 받을때 data.word이런식으로
+            })
+
+        </script>
+    </body>
+</html>
